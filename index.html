@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MazeCore — Algorithm Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- PARTICLES BACKGROUND -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="logo-icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect x="2" y="2" width="10" height="10" rx="2" fill="var(--accent-cyan)" opacity="0.9"/>
+        <rect x="16" y="2" width="10" height="10" rx="2" fill="var(--accent-purple)" opacity="0.7"/>
+        <rect x="2" y="16" width="10" height="10" rx="2" fill="var(--accent-purple)" opacity="0.7"/>
+        <rect x="16" y="16" width="10" height="10" rx="2" fill="var(--accent-cyan)" opacity="0.9"/>
+        <line x1="12" y1="7" x2="16" y2="7" stroke="var(--accent-cyan)" stroke-width="2"/>
+        <line x1="21" y1="12" x2="21" y2="16" stroke="var(--accent-purple)" stroke-width="2"/>
+        <line x1="12" y1="21" x2="16" y2="21" stroke="var(--accent-cyan)" stroke-width="2"/>
+        <line x1="7" y1="12" x2="7" y2="16" stroke="var(--accent-purple)" stroke-width="2"/>
+      </svg>
+    </div>
+    <span class="logo-text">Maze<span class="logo-accent">Core</span></span>
+  </div>
+  <div class="nav-links">
+    <a href="#maze-section" class="nav-link active">Maze</a>
+    <a href="#analytics-section" class="nav-link">Analytics</a>
+    <a href="#theory-section" class="nav-link">Theory</a>
+  </div>
+  <div class="nav-actions">
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <span class="theme-icon">☀</span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-content">
+    <div class="hero-tag">Analysis of Algorithms — Interactive Visualizer</div>
+    <h1 class="hero-title">Interactive Maze<br/><span class="hero-accent">Algorithm Visualizer</span></h1>
+    <p class="hero-sub">Generate mazes · Play them · Watch DFS, BFS, A* solve them · Compare efficiency</p>
+    <div class="hero-chips">
+      <span class="chip chip-dfs">DFS</span>
+      <span class="chip chip-bfs">BFS</span>
+      <span class="chip chip-astar">A*</span>
+      <span class="chip chip-gen">Recursive Backtracking</span>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat"><span class="hstat-val" id="hstat-mazes">0</span><span class="hstat-label">Mazes Generated</span></div>
+    <div class="hstat-div"></div>
+    <div class="hstat"><span class="hstat-val" id="hstat-moves">0</span><span class="hstat-label">Player Moves</span></div>
+    <div class="hstat-div"></div>
+    <div class="hstat"><span class="hstat-val" id="hstat-solves">0</span><span class="hstat-label">Algorithms Run</span></div>
+  </div>
+</header>
+
+<!-- MAIN APP -->
+<main class="app-layout" id="maze-section">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="section-label">Maze Generation</div>
+      <div class="control-group">
+        <label>Size</label>
+        <div class="size-buttons">
+          <button class="size-btn active" data-size="11">Small</button>
+          <button class="size-btn" data-size="21">Medium</button>
+          <button class="size-btn" data-size="31">Large</button>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Difficulty</label>
+        <select id="difficultySelect" class="custom-select">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Gen Speed</label>
+        <input type="range" id="genSpeed" min="1" max="100" value="50" class="custom-slider"/>
+        <span class="slider-val" id="genSpeedVal">50ms</span>
+      </div>
+      <button class="btn btn-primary" id="generateBtn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 8L8 14M2 8H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Generate Maze
+      </button>
+      <button class="btn btn-secondary" id="newMazeBtn">New Random</button>
+      <button class="btn btn-ghost" id="clearBtn">Clear</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Player Controls</div>
+      <div class="kbd-grid">
+        <div></div><div class="kbd">W / ↑</div><div></div>
+        <div class="kbd">A / ←</div><div class="kbd">S / ↓</div><div class="kbd">D / →</div>
+      </div>
+      <div class="stat-row"><span>Moves</span><span class="stat-val" id="moveCount">0</span></div>
+      <div class="stat-row"><span>Time</span><span class="stat-val" id="timerDisplay">00:00</span></div>
+      <div class="stat-row"><span>Status</span><span class="stat-val" id="gameStatus">—</span></div>
+      <button class="btn btn-secondary" id="hintBtn">💡 Hint</button>
+      <button class="btn btn-ghost" id="resetPlayerBtn">Reset Player</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Algorithm Solver</div>
+      <div class="algo-checkboxes">
+        <label class="algo-check"><input type="checkbox" id="chkDFS" checked/><span class="algo-tag dfs">DFS</span></label>
+        <label class="algo-check"><input type="checkbox" id="chkBFS" checked/><span class="algo-tag bfs">BFS</span></label>
+        <label class="algo-check"><input type="checkbox" id="chkAstar" checked/><span class="algo-tag astar">A*</span></label>
+      </div>
+      <div class="control-group">
+        <label>Solve Speed</label>
+        <input type="range" id="solveSpeed" min="1" max="100" value="60" class="custom-slider"/>
+        <span class="slider-val" id="solveSpeedVal">60ms</span>
+      </div>
+      <button class="btn btn-primary" id="solveBtn" disabled>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polygon points="4,2 14,8 4,14" fill="currentColor"/></svg>
+        Visualize Algorithms
+      </button>
+      <button class="btn btn-ghost" id="stopBtn" disabled>⏹ Stop</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Live Stats</div>
+      <div class="live-stats">
+        <div class="live-stat-card dfs-card">
+          <span class="algo-label">DFS</span>
+          <span class="live-nodes" id="live-dfs">—</span>
+        </div>
+        <div class="live-stat-card bfs-card">
+          <span class="algo-label">BFS</span>
+          <span class="live-nodes" id="live-bfs">—</span>
+        </div>
+        <div class="live-stat-card astar-card">
+          <span class="algo-label">A*</span>
+          <span class="live-nodes" id="live-astar">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Legend</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot start"></div><span>Start</span></div>
+        <div class="legend-item"><div class="legend-dot end"></div><span>End</span></div>
+        <div class="legend-item"><div class="legend-dot player"></div><span>Player</span></div>
+        <div class="legend-item"><div class="legend-dot wall"></div><span>Wall</span></div>
+        <div class="legend-item"><div class="legend-dot visited"></div><span>Visited</span></div>
+        <div class="legend-item"><div class="legend-dot path"></div><span>Final Path</span></div>
+        <div class="legend-item"><div class="legend-dot trail"></div><span>Breadcrumb</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAZE + RESULTS -->
+  <div class="main-content">
+    <!-- PHASE INDICATOR -->
+    <div class="phase-bar">
+      <div class="phase-step active" id="phase1"><span class="phase-num">1</span>Generate</div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-step" id="phase2"><span class="phase-num">2</span>Play</div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-step" id="phase3"><span class="phase-num">3</span>Visualize</div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-step" id="phase4"><span class="phase-num">4</span>Compare</div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-step" id="phase5"><span class="phase-num">5</span>Results</div>
+    </div>
+
+    <!-- MAZE CANVAS AREA -->
+    <div class="maze-container">
+      <canvas id="mazeCanvas"></canvas>
+      <div class="maze-overlay" id="mazeOverlay">
+        <div class="overlay-content">
+          <div class="overlay-icon">⬛</div>
+          <div class="overlay-text">Click <strong>Generate Maze</strong> to begin</div>
+          <button class="btn btn-primary" onclick="document.getElementById('generateBtn').click()">Generate Maze</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- WIN BANNER -->
+    <div class="win-banner" id="winBanner" style="display:none">
+      <div class="win-icon">🏆</div>
+      <div class="win-text">
+        <strong>Maze Solved!</strong>
+        <span id="winDetails"></span>
+      </div>
+      <button class="btn btn-primary" id="winSolveBtn">Watch Algorithms Solve It</button>
+    </div>
+
+    <!-- COMPARISON RESULTS -->
+    <div class="results-panel" id="resultsPanel" style="display:none">
+      <div class="results-header">
+        <h2>Algorithm Comparison</h2>
+        <div class="winner-badge" id="winnerBadge"></div>
+      </div>
+      <div class="comparison-cards" id="comparisonCards"></div>
+      <div class="winner-analysis" id="winnerAnalysis"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ANALYTICS SECTION -->
+<section class="analytics-section" id="analytics-section">
+  <div class="section-header">
+    <div class="section-tag">Performance Dashboard</div>
+    <h2>Algorithm Analytics</h2>
+    <p>Run the visualizer to populate live metrics and charts</p>
+  </div>
+
+  <!-- SUMMARY STAT PILLS -->
+  <div class="analytics-summary" id="analyticsSummary">
+    <div class="asummary-card" id="sum-dfs">
+      <span class="asummary-algo"><span class="algo-tag dfs">DFS</span></span>
+      <div class="asummary-stats">
+        <div class="asummary-row"><span>Nodes</span><strong id="sum-dfs-nodes">—</strong></div>
+        <div class="asummary-row"><span>Path</span><strong id="sum-dfs-path">—</strong></div>
+        <div class="asummary-row"><span>Time</span><strong id="sum-dfs-time">—</strong></div>
+      </div>
+    </div>
+    <div class="asummary-card" id="sum-bfs">
+      <span class="asummary-algo"><span class="algo-tag bfs">BFS</span></span>
+      <div class="asummary-stats">
+        <div class="asummary-row"><span>Nodes</span><strong id="sum-bfs-nodes">—</strong></div>
+        <div class="asummary-row"><span>Path</span><strong id="sum-bfs-path">—</strong></div>
+        <div class="asummary-row"><span>Time</span><strong id="sum-bfs-time">—</strong></div>
+      </div>
+    </div>
+    <div class="asummary-card" id="sum-astar">
+      <span class="asummary-algo"><span class="algo-tag astar">A*</span></span>
+      <div class="asummary-stats">
+        <div class="asummary-row"><span>Nodes</span><strong id="sum-astar-nodes">—</strong></div>
+        <div class="asummary-row"><span>Path</span><strong id="sum-astar-path">—</strong></div>
+        <div class="asummary-row"><span>Time</span><strong id="sum-astar-time">—</strong></div>
+      </div>
+    </div>
+    <div class="asummary-card asummary-winner" id="sum-winner">
+      <span class="asummary-algo">🏆 Winner</span>
+      <div class="asummary-winner-name" id="sum-winner-name">—</div>
+      <div class="asummary-winner-reason" id="sum-winner-reason">Run visualization to see results</div>
+    </div>
+  </div>
+
+  <!-- 2×2 CHART GRID -->
+  <div class="analytics-grid">
+    <div class="analytics-card">
+      <div class="chart-header">
+        <h3>Nodes Explored</h3>
+        <span class="chart-hint">fewer = better</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="nodesChart"></canvas>
+      </div>
+    </div>
+    <div class="analytics-card">
+      <div class="chart-header">
+        <h3>Path Length</h3>
+        <span class="chart-hint">shorter = better</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="pathChart"></canvas>
+      </div>
+    </div>
+    <div class="analytics-card">
+      <div class="chart-header">
+        <h3>Execution Time</h3>
+        <span class="chart-hint">ms</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="timeChart"></canvas>
+      </div>
+    </div>
+    <div class="analytics-card">
+      <div class="chart-header">
+        <h3>Performance Radar</h3>
+        <span class="chart-hint">multi-axis comparison</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLEXITY TABLE -->
+  <div class="complexity-table-wrap">
+    <h3>Complexity Reference</h3>
+    <table class="complexity-table">
+      <thead>
+        <tr>
+          <th>Algorithm</th>
+          <th>Time</th>
+          <th>Space</th>
+          <th>Optimal?</th>
+          <th>Complete?</th>
+          <th>Best Use Case</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="algo-tag dfs">DFS</span></td>
+          <td><code>O(V + E)</code></td>
+          <td><code>O(V)</code></td>
+          <td><span class="no">✗ No</span></td>
+          <td><span class="yes">✓ Yes</span></td>
+          <td>Deep exploration, cycle detection</td>
+        </tr>
+        <tr>
+          <td><span class="algo-tag bfs">BFS</span></td>
+          <td><code>O(V + E)</code></td>
+          <td><code>O(V)</code></td>
+          <td><span class="yes">✓ Unweighted</span></td>
+          <td><span class="yes">✓ Yes</span></td>
+          <td>Shortest path in unweighted graphs</td>
+        </tr>
+        <tr>
+          <td><span class="algo-tag astar">A*</span></td>
+          <td><code>O(E log V)</code></td>
+          <td><code>O(V)</code></td>
+          <td><span class="yes">✓ With h(n)</span></td>
+          <td><span class="yes">✓ Yes</span></td>
+          <td>Optimal heuristic pathfinding</td>
+        </tr>
+        <tr>
+          <td><span class="algo-tag gen">Rec. Backtrack</span></td>
+          <td><code>O(V)</code></td>
+          <td><code>O(V)</code></td>
+          <td><span style="color:var(--text-muted)">N/A</span></td>
+          <td><span style="color:var(--text-muted)">N/A</span></td>
+          <td>Perfect maze generation</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- THEORY SECTION -->
+<section class="theory-section" id="theory-section">
+  <div class="section-header">
+    <div class="section-tag">Educational Content</div>
+    <h2>Algorithm Theory</h2>
+    <p>Viva-ready explanations with complexity analysis</p>
+  </div>
+  <div class="theory-grid">
+
+    <div class="theory-card" data-algo="dfs">
+      <div class="theory-header">
+        <span class="algo-tag dfs">DFS</span>
+        <span class="theory-complexity">O(V+E)</span>
+      </div>
+      <h3>Depth-First Search</h3>
+      <p class="theory-desc">DFS explores as far as possible along each branch before backtracking. It uses a <strong>stack</strong> (or recursion call stack) to track the path. In maze solving, DFS dives deep into corridors before trying alternatives.</p>
+      <div class="theory-formula">
+        <div class="formula-label">Time</div><code>O(V + E)</code>
+        <div class="formula-label">Space</div><code>O(V)</code> <span class="formula-note">— stack depth</span>
+      </div>
+      <div class="theory-tags">
+        <div class="theory-pros">
+          <strong>✓ Pros</strong>
+          <ul>
+            <li>Low memory usage</li>
+            <li>Fast if goal is deep</li>
+            <li>Simple to implement</li>
+          </ul>
+        </div>
+        <div class="theory-cons">
+          <strong>✗ Cons</strong>
+          <ul>
+            <li>Not guaranteed shortest path</li>
+            <li>Can get trapped in deep branches</li>
+          </ul>
+        </div>
+      </div>
+      <div class="theory-apps"><strong>Real-world:</strong> Topological sort, cycle detection, web crawlers, game tree exploration.</div>
+    </div>
+
+    <div class="theory-card" data-algo="bfs">
+      <div class="theory-header">
+        <span class="algo-tag bfs">BFS</span>
+        <span class="theory-complexity">O(V+E)</span>
+      </div>
+      <h3>Breadth-First Search</h3>
+      <p class="theory-desc">BFS explores all neighbors at the current depth before moving deeper. It uses a <strong>queue</strong> (FIFO) and is guaranteed to find the shortest path in an unweighted graph.</p>
+      <div class="theory-formula">
+        <div class="formula-label">Time</div><code>O(V + E)</code>
+        <div class="formula-label">Space</div><code>O(V)</code> <span class="formula-note">— frontier queue</span>
+      </div>
+      <div class="theory-tags">
+        <div class="theory-pros">
+          <strong>✓ Pros</strong>
+          <ul>
+            <li>Guarantees shortest path</li>
+            <li>Level-by-level exploration</li>
+            <li>Complete algorithm</li>
+          </ul>
+        </div>
+        <div class="theory-cons">
+          <strong>✗ Cons</strong>
+          <ul>
+            <li>High memory usage (wide frontier)</li>
+            <li>Slower than A* with heuristics</li>
+          </ul>
+        </div>
+      </div>
+      <div class="theory-apps"><strong>Real-world:</strong> Social network shortest path, GPS navigation (unweighted), peer-to-peer networks.</div>
+    </div>
+
+    <div class="theory-card" data-algo="astar">
+      <div class="theory-header">
+        <span class="algo-tag astar">A*</span>
+        <span class="theory-complexity">O(E log V)</span>
+      </div>
+      <h3>A* Search Algorithm</h3>
+      <p class="theory-desc">A* combines the cost to reach a node (g) and a heuristic estimate to the goal (h). The evaluation function <code>f(n) = g(n) + h(n)</code> guides exploration toward the goal efficiently. Uses Manhattan distance as heuristic in grids.</p>
+      <div class="theory-formula">
+        <div class="formula-label">Formula</div><code>f(n) = g(n) + h(n)</code>
+        <div class="formula-label">Heuristic</div><code>h(n) = |dx| + |dy|</code> <span class="formula-note">Manhattan</span>
+        <div class="formula-label">Time</div><code>O(E log V)</code>
+        <div class="formula-label">Space</div><code>O(V)</code>
+      </div>
+      <div class="theory-tags">
+        <div class="theory-pros">
+          <strong>✓ Pros</strong>
+          <ul>
+            <li>Optimal & complete</li>
+            <li>Faster than BFS with heuristic</li>
+            <li>Explores fewer nodes</li>
+          </ul>
+        </div>
+        <div class="theory-cons">
+          <strong>✗ Cons</strong>
+          <ul>
+            <li>Heuristic design matters</li>
+            <li>More complex to implement</li>
+          </ul>
+        </div>
+      </div>
+      <div class="theory-apps"><strong>Real-world:</strong> Google Maps routing, video game AI pathfinding, robotics motion planning.</div>
+    </div>
+
+    <div class="theory-card" data-algo="gen">
+      <div class="theory-header">
+        <span class="algo-tag gen">Generator</span>
+        <span class="theory-complexity">O(V)</span>
+      </div>
+      <h3>Recursive Backtracking</h3>
+      <p class="theory-desc">A DFS-based maze generation algorithm. Starting from a random cell, it randomly visits unvisited neighbors, carving paths. When stuck, it backtracks. This creates a <strong>perfect maze</strong> — exactly one path between any two cells.</p>
+      <div class="theory-formula">
+        <div class="formula-label">Time</div><code>O(V)</code> <span class="formula-note">— each cell visited once</span>
+        <div class="formula-label">Space</div><code>O(V)</code> <span class="formula-note">— recursion stack</span>
+      </div>
+      <div class="theory-tags">
+        <div class="theory-pros">
+          <strong>✓ Pros</strong>
+          <ul>
+            <li>Always generates solvable mazes</li>
+            <li>Creates long, winding corridors</li>
+            <li>Simple recursive implementation</li>
+          </ul>
+        </div>
+        <div class="theory-cons">
+          <strong>✗ Cons</strong>
+          <ul>
+            <li>Deep recursion for large mazes</li>
+            <li>Biased toward certain patterns</li>
+          </ul>
+        </div>
+      </div>
+      <div class="theory-apps"><strong>Real-world:</strong> Procedural level generation in games, network topology design.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-content">
+    <div>
+      <strong>MazeCore</strong> — Analysis of Algorithms Interactive Visualizer
+    </div>
+    <div class="footer-links">
+      <span>DFS · BFS · A* · Recursive Backtracking</span>
+    </div>
+    <div>Built for academic excellence & portfolio use</div>
+  </div>
+</footer>
+
+<!-- SCRIPTS -->
+<script src="maze/generator.js"></script>
+<script src="algorithms/dfs.js"></script>
+<script src="algorithms/bfs.js"></script>
+<script src="algorithms/astar.js"></script>
+<script src="game/player.js"></script>
+<script src="game/controls.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
